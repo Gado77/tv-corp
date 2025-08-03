@@ -20,6 +20,7 @@ const availableMediasList = document.getElementById('available-medias-list');
 const saveMediaChangesBtn = document.getElementById('save-media-changes-btn');
 
 let currentEditingPlaylistId = null;
+let clientId = null; // Variável para guardar o ID do cliente
 
 // --- "SENTINELA" E INICIALIZAÇÃO ---
 (async () => {
@@ -28,6 +29,16 @@ let currentEditingPlaylistId = null;
         window.location.href = '/src/features/auth/auth.html';
         return;
     }
+    
+    // Captura e guarda o client_id dos metadados do usuário
+    clientId = session.user.user_metadata.client_id;
+    if (!clientId) {
+        alert("Erro crítico: ID do cliente não encontrado no perfil do usuário. Por favor, faça login novamente com uma conta válida.");
+        await supabase.auth.signOut();
+        window.location.href = '/src/features/auth/auth.html';
+        return;
+    }
+
     userEmailDisplay.textContent = session.user.email;
     loadPlaylists();
 })();
@@ -72,6 +83,7 @@ saveMediaChangesBtn.addEventListener('click', savePlaylistMediaOrder);
 async function loadPlaylists() {
     playlistListContainer.innerHTML = '<p>Buscando playlists...</p>';
     try {
+        // RLS garante que só vemos as playlists do nosso cliente
         const { data: playlists, error } = await supabase.from('playlists').select('*').order('created_at', { ascending: false });
         if (error) throw error;
 
@@ -94,10 +106,11 @@ async function loadPlaylists() {
             </div>
         `).join('');
 
-        document.querySelectorAll('.edit-playlist-btn').forEach(b => b.addEventListener('click', async (e) => {
+        // Reatribui os event listeners após renderizar
+        document.querySelectorAll('.edit-playlist-btn').forEach(b => b.addEventListener('click', (e) => {
             const id = e.target.dataset.id;
-            const { data } = await supabase.from('playlists').select('*').eq('id', id).single();
-            openPlaylistModal(data);
+            const playlist = playlists.find(p => p.id === id);
+            openPlaylistModal(playlist);
         }));
         document.querySelectorAll('.edit-media-btn').forEach(b => b.addEventListener('click', (e) => openEditMediaModal(e.target.dataset.id, e.target.dataset.name)));
         document.querySelectorAll('.delete-playlist-btn').forEach(b => b.addEventListener('click', (e) => deletePlaylist(e.target.dataset.id)));
@@ -110,7 +123,17 @@ async function loadPlaylists() {
 playlistForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = playlistIdInput.value;
-    const playlistData = { name: playlistNameInput.value, description: playlistDescriptionInput.value };
+    const playlistData = { 
+        name: playlistNameInput.value, 
+        description: playlistDescriptionInput.value 
+    };
+    
+    // **AQUI ESTÁ A CORREÇÃO CRUCIAL**
+    // Se for uma nova playlist (sem ID), adiciona o client_id que foi capturado no login.
+    if (!id) {
+        playlistData.client_id = clientId;
+    }
+
     try {
         let error;
         if (id) {
@@ -149,8 +172,8 @@ async function loadMediasForPlaylist() {
         const mediaIdsInPlaylist = playlistData.media_ids || [];
         const mediasInPlaylist = mediaIdsInPlaylist.map(id => allMedias.find(m => m.id === id)).filter(Boolean);
         const mediasAvailable = allMedias.filter(m => !mediaIdsInPlaylist.includes(m.id));
-        renderMediaList(playlistMediasList, mediasInPlaylist, true); // true = na playlist
-        renderMediaList(availableMediasList, mediasAvailable, false); // false = disponível
+        renderMediaList(playlistMediasList, mediasInPlaylist, true);
+        renderMediaList(availableMediasList, mediasAvailable, false);
     } catch (error) { console.error("Erro ao carregar mídias", error); }
 }
 
@@ -231,7 +254,6 @@ function getDragAfterElement(container, y) {
 async function savePlaylistMediaOrder() {
     saveMediaChangesBtn.disabled = true;
     saveMediaChangesBtn.textContent = 'Salvando...';
-    // ATENÇÃO: Corrigido para pegar o ID correto (UUID) em vez de parseInt
     const mediaIdsInOrder = Array.from(playlistMediasList.querySelectorAll('.item')).map(item => item.dataset.id);
     try {
         const { error } = await supabase.from('playlists').update({ media_ids: mediaIdsInOrder }).eq('id', currentEditingPlaylistId);

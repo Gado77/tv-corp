@@ -24,49 +24,49 @@
         </header>
 
         <main class="admin-content">
-            <h1>Configurações Globais</h1>
-            
-            <form id="settings-form">
-                <section class="card">
-                    <div class="card-header">
-                        <h2>Aparência do Player</h2>
-                    </div>
-                    <div class="form-group">
-                        <label for="logo-upload">Logo da Loja</label>
-                        <input type="file" id="logo-upload" class="form-input" accept="image/*">
-                        <small>Envie um novo logo para substituir o atual. PNG com fundo transparente é recomendado.</small>
-                        <div id="current-logo-preview" style="margin-top: 1rem;"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="logo-size">Tamanho do Logo (1-20)</label>
-                        <input type="range" id="logo-size" min="1" max="20" value="10">
-                        <small>Define o quão grande o logo aparece no painel de informações.</small>
-                    </div>
-                </section>
+    <h1>Configurações Globais</h1>
+    
+    <form id="settings-form">
+        <section class="card">
+            <div class="card-header">
+                <h2>Aparência do Player</h2>
+            </div>
+            <div class="form-group">
+                <label for="logo-upload">Logo da Loja</label>
+                <input type="file" id="logo-upload" class="form-input" accept="image/*">
+                <small>Envie um novo logo para substituir o atual. PNG com fundo transparente é recomendado.</small>
+                <div id="current-logo-preview" style="margin-top: 1rem;"></div>
+            </div>
+            <div class="form-group">
+                <label for="logo-size">Tamanho do Logo (<span id="logo-size-value">10</span> / 20)</label>
+                <input type="range" id="logo-size" min="1" max="20" value="10">
+                <small>Define o quão grande o logo aparece no painel de informações.</small>
+            </div>
+        </section>
 
-                <section class="card">
-                    <div class="card-header">
-                        <h2>Painel de Informações (Clima e Notícias)</h2>
-                    </div>
-                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="info-panel-enabled">
-                            Ativar painel de informações periodicamente
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label for="weather-api-key">Chave da API OpenWeatherMap</label>
-                        <input type="text" id="weather-api-key" class="form-input" placeholder="Sua chave de API aqui">
-                    </div>
-                    <div class="form-group">
-                        <label for="weather-city">Cidade para Previsão do Tempo</label>
-                        <input type="text" id="weather-city" class="form-input" placeholder="Ex: Sao Paulo, BR">
-                    </div>
-                </section>
+        <section class="card">
+            <div class="card-header">
+                <h2>Painel de Informações (Clima e Notícias)</h2>
+            </div>
+             <div class="form-group">
+                <label>
+                    <input type="checkbox" id="info-panel-enabled">
+                    Ativar painel de informações periodicamente
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="weather-api-key">Chave da API OpenWeatherMap</label>
+                <input type="text" id="weather-api-key" class="form-input" placeholder="Sua chave de API aqui">
+            </div>
+            <div class="form-group">
+                <label for="weather-city">Cidade para Previsão do Tempo</label>
+                <input type="text" id="weather-city" class="form-input" placeholder="Ex: Sao Paulo, BR">
+            </div>
+        </section>
 
-                <button type="submit" class="btn btn-primary">Salvar Configurações</button>
-            </form>
-        </main>
+        <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+    </form>
+</main>
     </div>
 
     <div id="feedback-message" class="toast"></div>

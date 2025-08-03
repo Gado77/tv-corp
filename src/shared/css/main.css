@@ -382,3 +382,20 @@ input[type="range"]:hover::-webkit-slider-thumb {
     opacity: 0.5;
     background: var(--primary-color);
 }
+/* Adiciona um cursor de "ponteiro" ao passar o mouse sobre os cartões */
+.stat-card-link .stat-card {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Adiciona um efeito de "levantar" ao passar o mouse */
+.stat-card-link:hover .stat-card {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Remove a linha de sublinhado padrão dos links */
+.stat-card-link {
+    text-decoration: none;
+    color: inherit; /* Herda a cor do texto do elemento pai */
+}

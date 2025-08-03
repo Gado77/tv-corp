@@ -24,12 +24,36 @@
         </header>
 
         <main class="admin-content">
-            <section class="card">
-                <h1>Bem-vindo ao seu Dashboard</h1>
-                <p>Use o menu acima para navegar e gerenciar seu sistema.</p>
-            </section>
+    <section class="card">
+        <h1>Bem-vindo ao seu Dashboard</h1>
+        <p>Use o menu acima para navegar e gerenciar seu sistema.</p>
+    </section>
 
-        </main>
+    <section id="stats-container" style="visibility: hidden;">
+        <div class="stats-grid">
+            <a href="/src/features/medias/medias.html" class="stat-card-link" id="medias-link">
+                <div class="stat-card">
+                    <h2 id="media-count">0</h2>
+                    <p>Mídias</p>
+                </div>
+            </a>
+            
+            <a href="/src/features/playlists/playlists.html" class="stat-card-link" id="playlists-link">
+                <div class="stat-card">
+                    <h2 id="playlist-count">0</h2>
+                    <p>Playlists</p>
+                </div>
+            </a>
+
+            <a href="/src/features/tvs/tvs.html" class="stat-card-link" id="tvs-link">
+                <div class="stat-card">
+                    <h2 id="tv-count">0</h2>
+                    <p>TVs</p>
+                </div>
+            </a>
+        </div>
+    </section>
+</main>
     </div>
 
     <script type="module" src="./dashboard.js"></script>
