@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TV Corporativa</title>
+    <link rel="stylesheet" href="/src/shared/css/main.css">
+</head>
+<body>
+    <div class="screen active" id="adminScreen">
+        <header class="admin-header">
+            <div class="admin-title">TV Corp Admin</div>
+            <nav class="admin-nav">
+                <a href="/src/features/dashboard/dashboard.html" class="nav-btn active">Dashboard</a>
+                <a href="/src/features/medias/medias.html" class="nav-btn">Mídias</a>
+                <a href="/src/features/playlists/playlists.html" class="nav-btn">Playlists</a>
+                <a href="/src/features/tvs/tvs.html" class="nav-btn">TVs</a>
+                <a href="/src/features/settings/settings.html" class="nav-btn">Configurações</a>
+            </nav>
+            <div class="nav-user">
+                <span id="user-email-display"></span>
+                <button id="logout-btn" class="btn btn-sm btn-secondary">Sair</button>
+            </div>
+        </header>
+
+        <main class="admin-content">
+            <section class="card">
+                <h1>Bem-vindo ao seu Dashboard</h1>
+                <p>Use o menu acima para navegar e gerenciar seu sistema.</p>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module" src="./dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Aprovações</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+</head>
+<body>
+    <main class="admin-content" style="max-width: 900px; margin: 2rem auto;">
+        <section class="card">
+            <div class="card-header">
+                <h1>Painel Super Admin</h1>
+                <button id="logout-btn" class="btn btn-sm btn-secondary">Sair</button>
+            </div>
+            <p>Acesso exclusivo para gerenciamento do sistema.</p>
+        </section>
+
+        <section class="card" id="approve-clients-section">
+            <div class="card-header">
+                <h2>Pedidos de Cadastro Pendentes</h2>
+            </div>
+            <div id="pending-clients-list">
+                <p>Carregando...</p>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="./super-admin.js"></script>
+</body>
+</html>
