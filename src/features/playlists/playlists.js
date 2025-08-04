@@ -1,4 +1,5 @@
-import { supabase } from '/src/shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
+import { supabase } from '../../shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -26,7 +27,8 @@ let clientId = null; // Variável para guardar o ID do cliente
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        window.location.href = '/src/features/auth/auth.html';
+        // CORREÇÃO 2: Caminho relativo para a página de login
+        window.location.href = '../auth/auth.html';
         return;
     }
     
@@ -35,7 +37,8 @@ let clientId = null; // Variável para guardar o ID do cliente
     if (!clientId) {
         alert("Erro crítico: ID do cliente não encontrado no perfil do usuário. Por favor, faça login novamente com uma conta válida.");
         await supabase.auth.signOut();
-        window.location.href = '/src/features/auth/auth.html';
+        // CORREÇÃO 3: Caminho relativo para a página de login
+        window.location.href = '../auth/auth.html';
         return;
     }
 
@@ -46,7 +49,8 @@ let clientId = null; // Variável para guardar o ID do cliente
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    window.location.href = '/src/features/auth/auth.html';
+    // CORREÇÃO 4: Caminho relativo para a página de login
+    window.location.href = '../auth/auth.html';
 });
 
 // --- FUNÇÕES DE MODAL ---
@@ -128,7 +132,6 @@ playlistForm.addEventListener('submit', async (e) => {
         description: playlistDescriptionInput.value 
     };
     
-    // **AQUI ESTÁ A CORREÇÃO CRUCIAL**
     // Se for uma nova playlist (sem ID), adiciona o client_id que foi capturado no login.
     if (!id) {
         playlistData.client_id = clientId;

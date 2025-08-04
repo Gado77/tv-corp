@@ -1,4 +1,5 @@
-import { supabase } from '/src/shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
+import { supabase } from '../../shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -6,7 +7,7 @@ const logoutBtn = document.getElementById('logout-btn');
 const settingsForm = document.getElementById('settings-form');
 const logoUploadInput = document.getElementById('logo-upload');
 const logoSizeInput = document.getElementById('logo-size');
-const logoSizeValue = document.getElementById('logo-size-value'); // NOVO SELETOR
+const logoSizeValue = document.getElementById('logo-size-value');
 const currentLogoPreview = document.getElementById('current-logo-preview');
 const infoPanelEnabledInput = document.getElementById('info-panel-enabled');
 const weatherApiKeyInput = document.getElementById('weather-api-key');
@@ -20,7 +21,8 @@ let currentSettings = {};
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        window.location.href = '/src/features/auth/auth.html';
+        // CORREÇÃO 2: Caminho relativo para a página de login
+        window.location.href = '../auth/auth.html';
         return;
     }
     
@@ -28,13 +30,14 @@ let currentSettings = {};
     if (!clientId) {
         alert("Erro crítico: ID do cliente não encontrado.");
         await supabase.auth.signOut();
+        // CORREÇÃO 3: Caminho relativo para a página de login (também aqui)
+        window.location.href = '../auth/auth.html';
         return;
     }
 
     userEmailDisplay.textContent = session.user.email;
     loadSettings();
 
-    // ALTERAÇÃO: Adiciona o "escutador" para o evento de deslizar
     logoSizeInput.addEventListener('input', () => {
         if (logoSizeValue) {
             logoSizeValue.textContent = logoSizeInput.value;
@@ -45,7 +48,8 @@ let currentSettings = {};
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    window.location.href = '/src/features/auth/auth.html';
+    // CORREÇÃO 4: Caminho relativo para a página de login
+    window.location.href = '../auth/auth.html';
 });
 
 // --- LÓGICA DE CONFIGURAÇÕES ---
@@ -58,7 +62,7 @@ async function loadSettings() {
             currentSettings = data;
             const size = data.logo_size || 10;
             logoSizeInput.value = size;
-            logoSizeValue.textContent = size; // ALTERAÇÃO: Atualiza o valor no carregamento
+            logoSizeValue.textContent = size;
             infoPanelEnabledInput.checked = data.info_panel_enabled;
             weatherApiKeyInput.value = data.weather_api_key || '';
             weatherCityInput.value = data.weather_city || '';

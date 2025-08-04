@@ -1,4 +1,5 @@
-import { supabase } from '/src/shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
+import { supabase } from '../../shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -12,7 +13,8 @@ const tvCountEl = document.getElementById('tv-count');
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        window.location.href = '/src/features/auth/auth.html';
+        // CORREÇÃO 2: Caminho relativo para a página de login
+        window.location.href = '../auth/auth.html';
         return;
     }
     userEmailDisplay.textContent = session.user.email;
@@ -22,7 +24,8 @@ const tvCountEl = document.getElementById('tv-count');
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    window.location.href = '/src/features/auth/auth.html';
+    // CORREÇÃO 3: Caminho relativo para a página de login
+    window.location.href = '../auth/auth.html';
 });
 
 // --- LÓGICA PRINCIPAL DO DASHBOARD ---
@@ -45,7 +48,6 @@ async function loadDashboardData() {
 
         statsContainer.style.visibility = 'visible';
         
-        // **NOVA FUNÇÃO ADICIONADA AQUI**
         // Ativa os links dos cartões de estatísticas
         setupClickableStats();
 
@@ -55,7 +57,7 @@ async function loadDashboardData() {
     }
 }
 
-// **NOVA FUNÇÃO PARA TORNAR OS CARTÕES CLICÁVEIS**
+// Função para tornar os cartões clicáveis
 function setupClickableStats() {
     document.querySelectorAll('.stat-card-link').forEach(link => {
         link.addEventListener('click', function(event) {

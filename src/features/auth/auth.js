@@ -1,4 +1,5 @@
-import { supabase } from '/src/shared/js/supabase-client.js';
+// CORREÇÃO: Caminho relativo para encontrar o ficheiro na pasta 'shared'
+import { supabase } from '../../shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const loginForm = document.getElementById('login-form');
@@ -9,7 +10,7 @@ const openSignupModalBtn = document.getElementById('open-signup-modal-btn');
 const signupModal = document.getElementById('signup-modal');
 const closeSignupModalBtn = document.getElementById('close-signup-modal');
 
-// --- Lógica de Login (inalterada) ---
+// --- Lógica de Login ---
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('login-email').value;
@@ -17,7 +18,8 @@ loginForm.addEventListener('submit', async (event) => {
     try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        window.location.href = '/src/features/dashboard/dashboard.html';
+        // CORREÇÃO: Caminho relativo para o dashboard
+        window.location.href = '../dashboard/dashboard.html';
     } catch (error) {
         showFeedback(`Erro no login: ${error.message}`, 'error');
     }
@@ -33,10 +35,10 @@ forgotPasswordLink.addEventListener('click', async (event) => {
     }
 
     try {
-        // DEPOIS:
-       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/src/features/auth/reset-password.html',
-    });
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            // CORREÇÃO: Caminho relativo para a página de reset de senha
+            redirectTo: window.location.origin + '/src/features/auth/reset-password.html',
+       });
         if (error) throw error;
         showFeedback('Link de redefinição de senha enviado para o seu e-mail!', 'success');
     } catch (error) {
@@ -58,7 +60,7 @@ signupModal.addEventListener('click', (e) => {
     }
 });
 
-// --- Lógica de Solicitação de Cadastro (inalterada) ---
+// --- Lógica de Solicitação de Cadastro ---
 signupForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const clientName = document.getElementById('signup-client-name').value;
@@ -68,6 +70,7 @@ signupForm.addEventListener('submit', async (event) => {
     submitButton.textContent = 'Enviando...';
 
     try {
+        // Assume que 'receber-pedido' é uma Edge Function
         const { error } = await supabase.functions.invoke('receber-pedido', {
             body: { client_name: clientName, user_email: userEmail },
         });
@@ -83,7 +86,7 @@ signupForm.addEventListener('submit', async (event) => {
     }
 });
 
-// --- Função de Feedback Visual (inalterada) ---
+// --- Função de Feedback Visual ---
 function showFeedback(message, type = 'success') {
     feedbackMessage.textContent = message;
     feedbackMessage.className = `toast show ${type}`;

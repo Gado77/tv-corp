@@ -1,4 +1,5 @@
-import { supabase } from '/src/shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
+import { supabase } from '../../shared/js/supabase-client.js';
 
 const resetForm = document.getElementById('reset-password-form');
 const newPasswordInput = document.getElementById('new-password');
@@ -6,7 +7,7 @@ const messageArea = document.getElementById('message-area');
 const feedbackMessage = document.getElementById('feedback-message');
 
 // --- Lidar com o Evento de Redefinição de Senha ---
-// O Supabase usa um evento especial 'SIGNED_IN' após o redirecionamento de recuperação
+// O Supabase usa um evento especial 'PASSWORD_RECOVERY' após o redirecionamento
 supabase.auth.onAuthStateChange(async (event, session) => {
     // Este evento só dispara na página de redirecionamento com o token
     if (event === "PASSWORD_RECOVERY") {
@@ -31,9 +32,10 @@ resetForm.addEventListener('submit', async (e) => {
         resetForm.style.display = 'none'; // Esconde o formulário
         showFeedback('Senha atualizada com sucesso!', 'success');
         
+        // CORREÇÃO 2: Caminho relativo para a página de login
         // Redireciona para a página de login após 3 segundos
         setTimeout(() => {
-            window.location.href = '/src/features/auth/auth.html';
+            window.location.href = './auth.html';
         }, 3000);
     }
 });

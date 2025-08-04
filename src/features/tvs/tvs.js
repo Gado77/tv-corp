@@ -1,11 +1,11 @@
-import { supabase } from '/src/shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
+import { supabase } from '../../shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
 const logoutBtn = document.getElementById('logout-btn');
 const tvListContainer = document.getElementById('tv-list-container');
 const addTvBtn = document.getElementById('add-tv-btn');
-// ... (outros seletores permanecem iguais)
 const tvModal = document.getElementById('tv-modal');
 const tvForm = document.getElementById('tv-form');
 const tvModalTitle = document.getElementById('tv-modal-title');
@@ -25,13 +25,15 @@ let clientId = null;
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        window.location.href = '/src/features/auth/auth.html';
+        // CORREÇÃO 2: Caminho relativo para a página de login
+        window.location.href = '../auth/auth.html';
         return;
     }
     clientId = session.user.user_metadata.client_id;
     if (!clientId) {
         alert("Erro crítico: ID do cliente não encontrado.");
-        window.location.href = '/src/features/auth/auth.html';
+        // CORREÇÃO 3: Caminho relativo para a página de login
+        window.location.href = '../auth/auth.html';
         return;
     }
     userEmailDisplay.textContent = session.user.email;
@@ -41,10 +43,11 @@ let clientId = null;
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    window.location.href = '/src/features/auth/auth.html';
+    // CORREÇÃO 4: Caminho relativo para a página de login
+    window.location.href = '../auth/auth.html';
 });
 
-// --- FUNÇÕES DO MODAL (sem alterações) ---
+// --- FUNÇÕES DO MODAL ---
 async function openTvModal(tv = null) {
     tvForm.reset();
     if (tv) {
@@ -88,17 +91,13 @@ async function populatePlaylistSelect(selectedPlaylistId = null) {
 }
 
 // --- LÓGICA DE GERENCIAMENTO DE TVS (CRUD) ---
-// Substitua a sua função loadTvs antiga por esta
 async function loadTvs() {
     tvListContainer.innerHTML = '<p>Buscando TVs registradas...</p>';
     try {
-        // ALTERAÇÃO: Adicionado .not('client_id', 'is', null)
-        // Isto diz ao Supabase: "Traga-me todas as TVs, exceto aquelas
-        // que ainda não foram reivindicadas por um cliente."
         const { data: tvs, error } = await supabase
             .from('tvs')
             .select('*, playlists(name)')
-            .not('client_id', 'is', null) // <-- AQUI ESTÁ A CORREÇÃO
+            .not('client_id', 'is', null) 
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -137,8 +136,6 @@ async function loadTvs() {
     }
 }
 
-// ***** FUNÇÃO DE SUBMISSÃO DO FORMULÁRIO ATUALIZADA *****
-// Substitua a sua função tvForm.addEventListener antiga por esta
 tvForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = tvIdInput.value;
@@ -153,21 +150,17 @@ tvForm.addEventListener('submit', async (e) => {
     try {
         let error;
         if (id) {
-            // Editando uma TV existente (lógica inalterada)
             ({ error } = await supabase.from('tvs').update(baseData).eq('id', id));
         } else {
-            // LÓGICA DE PAREAMENTO CORRIGIDA
             const pairingCode = tvPairingCodeInput.value.trim().toUpperCase();
             if (!pairingCode) {
                 alert("O código de pareamento é obrigatório.");
                 return;
             }
             
-            // CORREÇÃO: Prepara os dados para a atualização SEM anular o pairing_code
             const updateData = {
                 ...baseData,
                 client_id: clientId
-                // A linha "pairing_code: null" foi REMOVIDA daqui
             };
             
             const { data: updatedTvs, error: updateError } = await supabase
