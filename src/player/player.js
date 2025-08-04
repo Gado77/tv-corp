@@ -70,6 +70,7 @@ async function populatePlaylists() {
     const select = document.getElementById('playlist-select');
     if (!select || !tvId) return;
     try {
+        // Usa a função RPC segura para buscar as playlists
         const { data, error } = await supabase.rpc('get_playlists_for_tv', { tv_id_input: tvId });
         if (error) throw error;
         
@@ -192,6 +193,7 @@ function playMediaAtIndex(index) {
     newElement.src = `${media.url}?t=${new Date().getTime()}`;
     mediaContainer.prepend(newElement);
 }
+
 async function fetchWeather() {
     if (!settings.weather_api_key || !settings.weather_city) return;
     try {
@@ -252,38 +254,36 @@ function applySettings(tvData, clientSettingsData) {
     }
 }
 
-// ***** AQUI ESTÁ A CORREÇÃO FINAL *****
 async function getInitialData() {
     if (!tvId) {
         showPairingScreen();
         return;
     }
+    
+    pairingScreen.style.display = 'flex';
+    pairingCodeEl.textContent = "Conectando...";
+
     try {
         const { data, error } = await supabase.rpc('get_player_data', { tv_id_input: tvId });
         if (error) throw error;
 
-        // A verificação foi relaxada. O pareamento é um sucesso se a TV tiver um client_id.
+        // Verificação final e robusta
         if (!data || !data.tv || !data.tv.client_id) {
              console.error("TV não pareada ou sem cliente. Voltando à tela de código.");
-             unpairTv(false);
+             setTimeout(() => unpairTv(false), 3000);
              return;
         }
         
         pairingScreen.style.display = 'none';
         applySettings(data.tv, data.client_settings);
-        
-        // Se houver uma playlist, define currentPlaylist. Se não, ela fica como um array vazio.
         currentPlaylist = data.playlist_medias || [];
-        
-        // A função playMediaAtIndex já sabe como mostrar a mensagem "Nenhuma playlist selecionada".
         playMediaAtIndex(0);
-        
         startRealtimeListeners(tvId);
         fetchWeather();
         fetchNews();
     } catch (error) {
         console.error("Erro fatal ao carregar dados do player:", error.message);
-        unpairTv(false);
+        setTimeout(() => unpairTv(false), 3000);
     }
 }
 
@@ -304,27 +304,40 @@ async function showPairingScreen() {
     pairingCodeEl.textContent = code;
 
     try {
-        const { data: newTv, error } = await supabase
+        const { error: insertError } = await supabase
             .from('tvs')
-            .insert({ pairing_code: code })
-            .select('id')
-            .single();
-        if (error) throw error;
-        const newTvId = newTv.id;
-        
+            .insert({ pairing_code: code }, { returning: 'minimal' });
+            
+        if (insertError) throw insertError;
+
+        console.log(`TV registada com o código ${code}. A aguardar pareamento...`);
+
         pairingChannel = supabase
-            .channel(`pairing-channel-${newTvId}`)
-            .on('postgres_changes', {
-                event: 'UPDATE', schema: 'public', table: 'tvs', filter: `id=eq.${newTvId}`
-            }, (payload) => {
-                if (payload.new.client_id) {
-                    console.log(`TV pareada com sucesso! ID: ${newTvId}`);
-                    localStorage.setItem('tvId', newTvId);
-                    if (pairingChannel) supabase.removeChannel(pairingChannel);
-                    location.reload();
+            .channel(`pairing-channel-${code}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'tvs',
+                    filter: `pairing_code=eq.${code}`
+                },
+                (payload) => {
+                    if (payload.new.client_id) {
+                        console.log('Pareamento recebido!', payload.new);
+                        
+                        localStorage.setItem('tvId', payload.new.id); 
+                        tvId = payload.new.id;
+                        
+                        if (pairingChannel) supabase.removeChannel(pairingChannel);
+                        
+                        // Em vez de recarregar, chama a função de carregar dados diretamente
+                        getInitialData(); 
+                    }
                 }
-            })
+            )
             .subscribe();
+
     } catch (error) {
         console.error("Erro ao criar TV para pareamento:", error.message);
         pairingCodeEl.textContent = "ERRO";
