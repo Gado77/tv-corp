@@ -26,6 +26,9 @@ let pairingChannel = null;
 let settings = {};
 let isSettingsPanelOpen = false;
 
+let newsItems = [];
+let currentNewsIndex = 0
+
 // --- Funções de Controle da Interface ---
 function showInfoMode() {
     body.classList.add('info-mode-active');
@@ -155,26 +158,40 @@ function toggleFullscreen() {
     }
 }
 
+// Substitua a sua função playMediaAtIndex antiga por esta
 function playMediaAtIndex(index) {
     clearTimeout(mediaTimer);
+    const spinner = mediaContainer.querySelector('.loading-spinner');
+
     if (!currentPlaylist || currentPlaylist.length === 0) {
+        if(spinner) spinner.style.display = 'none'; // Esconde o spinner se a playlist estiver vazia
         mediaContainer.innerHTML = `<div class="overlay"><h1>Nenhuma playlist selecionada.</h1><p>Por favor, associe uma playlist a esta TV no painel de administração.</p></div>`;
         return;
     }
+    
+    if(spinner) spinner.style.display = 'block'; // Mostra o spinner no início de cada mídia
+
     currentMediaIndex = (index + currentPlaylist.length) % currentPlaylist.length;
     const media = currentPlaylist[currentMediaIndex];
+
     if (!media || !media.url) {
-        setTimeout(() => playMediaAtIndex(currentMediaIndex + 1), 1000);
+        console.warn("Mídia inválida encontrada, a pular...");
+        if(spinner) spinner.style.display = 'none';
+        setTimeout(() => playMediaAtIndex(currentMediaIndex + 1), 500);
         return;
     }
+
     const oldElement = mediaContainer.querySelector('img, video');
     if (oldElement) {
         oldElement.classList.remove('active');
         setTimeout(() => oldElement.remove(), 800);
     }
+    
     const elementType = media.type === 'image' ? 'img' : 'video';
     const newElement = document.createElement(elementType);
-    newElement.onload = newElement.oncanplaythrough = () => {
+
+    const onMediaReady = () => {
+        if(spinner) spinner.style.display = 'none'; // Esconde o spinner
         newElement.classList.add('active');
         if (elementType === 'video') {
             newElement.play().catch(e => console.error("Erro ao dar play no vídeo:", e));
@@ -184,12 +201,23 @@ function playMediaAtIndex(index) {
             mediaTimer = setTimeout(() => playMediaAtIndex(currentMediaIndex + 1), duration * 1000);
         }
     };
-    newElement.onerror = () => playMediaAtIndex(currentMediaIndex + 1);
+    
+    const onMediaError = () => {
+        console.error(`Falha ao carregar mídia: ${media.url}`);
+        if(spinner) spinner.style.display = 'none'; // Esconde o spinner em caso de erro
+        setTimeout(() => playMediaAtIndex(currentMediaIndex + 1), 500); // Tenta a próxima mídia
+    };
+
+    newElement.addEventListener('load', onMediaReady);
+    newElement.addEventListener('canplaythrough', onMediaReady);
+    newElement.addEventListener('error', onMediaError);
+
     if (elementType === 'video') {
         newElement.muted = true;
         newElement.autoplay = true;
         newElement.playsInline = true;
     }
+    
     newElement.src = `${media.url}?t=${new Date().getTime()}`;
     mediaContainer.prepend(newElement);
 }
@@ -222,18 +250,12 @@ async function fetchNews() {
     try {
         const { data, error } = await supabase.rpc('get_recent_news');
         if (error) throw error;
-        const newsItems = data && data.length ? data.map(item => ({ title: item.summary_title, description: item.summary_text })) : [];
+        
+        // Preenche a variável global newsItems
+        newsItems = data && data.length ? data.map(item => ({ title: item.summary_title, description: item.summary_text })) : [];
+        
         if (newsItems.length > 0) {
-            let currentNewsIndex = 0;
-            const display = () => {
-                if (!document.body.classList.contains('info-mode-active')) return;
-                const item = newsItems[currentNewsIndex];
-                newsTitle.textContent = item.title;
-                newsSummary.textContent = item.description;
-                currentNewsIndex = (currentNewsIndex + 1) % newsItems.length;
-            };
-            display();
-            setInterval(display, 15000);
+            displayNews(0); // Exibe a primeira notícia assim que são carregadas
         } else {
             newsTitle.textContent = "Sem notícias recentes.";
         }
@@ -241,6 +263,17 @@ async function fetchNews() {
         console.error("Erro ao buscar notícias:", error.message);
         newsTitle.textContent = "Erro ao carregar notícias.";
     }
+}
+
+function displayNews(index) {
+    if (!newsItems || newsItems.length === 0) return;
+
+    // Garante que o índice seja sempre válido e que a navegação seja circular
+    currentNewsIndex = (index + newsItems.length) % newsItems.length;
+    
+    const item = newsItems[currentNewsIndex];
+    if (newsTitle) newsTitle.textContent = item.title;
+    if (newsSummary) newsSummary.textContent = item.description;
 }
 
 function applySettings(tvData, clientSettingsData) {
@@ -348,29 +381,74 @@ function initPlayer() {
     updateClock();
     setInterval(updateClock, 30000);
     
+    // Adiciona "escutadores" de eventos para os botões no painel de configurações
     document.getElementById('save-playlist-btn')?.addEventListener('click', saveNewPlaylist);
     document.getElementById('restart-player-btn')?.addEventListener('click', restartPlayer);
     document.getElementById('unpair-tv-btn')?.addEventListener('click', () => unpairTv(true));
     
-    document.addEventListener('keydown', (event) => {
-        if (isSettingsPanelOpen) {
-            event.preventDefault();
-            switch (event.key) {
-                case 'ArrowUp': handleSettingsNavigation('up'); break;
-                case 'ArrowDown': handleSettingsNavigation('down'); break;
-                case 'Enter': document.activeElement?.click(); break;
-                case 'Escape': hideSettingsPanel(); break;
-            }
-            return;
-        }
+    // Adiciona o "escutador" principal para os eventos de teclado
+   // Substitua o seu bloco addEventListener('keydown') por este
+
+document.addEventListener('keydown', (event) => {
+    // Se o painel de configurações estiver aberto, a navegação é SÓ dentro dele
+    if (isSettingsPanelOpen) {
+        event.preventDefault();
         switch (event.key) {
-            case 'ArrowUp': showInfoMode(); break;
-            case 'ArrowDown': toggleSettingsPanel(); break;
-            case 'Escape': hideInfoMode(); break;
-            case 'Enter': toggleFullscreen(); break;
+            case 'ArrowUp': handleSettingsNavigation('up'); break;
+            case 'ArrowDown': handleSettingsNavigation('down'); break;
+            case 'Enter': document.activeElement?.click(); break;
+            case 'Escape': hideSettingsPanel(); break;
         }
-    });
+        return;
+    }
+
+    // Se o painel de configurações NÃO estiver aberto, usa a lógica de controlo principal
+    switch (event.key) {
+        case 'ArrowUp':
+            body.classList.contains('info-mode-active') ? hideInfoMode() : showInfoMode();
+            break;
+
+        case 'ArrowDown':
+            if (!body.classList.contains('info-mode-active')) {
+                toggleSettingsPanel();
+            }
+            break;
+
+        case 'Escape':
+            hideInfoMode();
+            hideSettingsPanel();
+            break;
+
+        case 'Enter':
+            if (!isSettingsPanelOpen && !body.classList.contains('info-mode-active')) {
+                toggleFullscreen();
+            }
+            break;
+        
+        // ***** LÓGICA DE NAVEGAÇÃO ADICIONADA AQUI *****
+        case 'ArrowRight':
+            // Se o modo de info estiver ativo, avança a notícia. Se não, avança a mídia.
+            if (body.classList.contains('info-mode-active')) {
+                displayNews(currentNewsIndex + 1);
+            } else {
+                playMediaAtIndex(currentMediaIndex + 1);
+            }
+            break;
+
+        case 'ArrowLeft':
+            // Se o modo de info estiver ativo, retrocede a notícia. Se não, retrocede a mídia.
+            if (body.classList.contains('info-mode-active')) {
+                displayNews(currentNewsIndex - 1);
+            } else {
+                playMediaAtIndex(currentMediaIndex - 1);
+            }
+            break;
+    }
+});
+
+    // Inicia o processo de carregar os dados do Player
     getInitialData();
 }
 
+// Garante que a função initPlayer() seja chamada quando a página terminar de carregar
 window.addEventListener('DOMContentLoaded', initPlayer);
