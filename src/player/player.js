@@ -157,7 +157,7 @@ function toggleFullscreen() {
 function playMediaAtIndex(index) {
     clearTimeout(mediaTimer);
     if (!currentPlaylist || currentPlaylist.length === 0) {
-        mediaContainer.innerHTML = `<div class="overlay"><h1>Playlist vazia ou sem mídias.</h1><p>Aguardando conteúdo do painel admin...</p></div>`;
+        mediaContainer.innerHTML = `<div class="overlay"><h1>Nenhuma playlist selecionada.</h1><p>Por favor, associe uma playlist a esta TV no painel de administração.</p></div>`;
         return;
     }
     currentMediaIndex = (index + currentPlaylist.length) % currentPlaylist.length;
@@ -192,10 +192,6 @@ function playMediaAtIndex(index) {
     newElement.src = `${media.url}?t=${new Date().getTime()}`;
     mediaContainer.prepend(newElement);
 }
-
-// --- FIM DA PARTE 1 de 2 ---
-// --- INÍCIO DA PARTE 2 de 2 ---
-
 async function fetchWeather() {
     if (!settings.weather_api_key || !settings.weather_city) return;
     try {
@@ -235,7 +231,7 @@ async function fetchNews() {
                 currentNewsIndex = (currentNewsIndex + 1) % newsItems.length;
             };
             display();
-            setInterval(display, 15000); // Muda a notícia a cada 15 segundos
+            setInterval(display, 15000);
         } else {
             newsTitle.textContent = "Sem notícias recentes.";
         }
@@ -256,6 +252,7 @@ function applySettings(tvData, clientSettingsData) {
     }
 }
 
+// ***** AQUI ESTÁ A CORREÇÃO FINAL *****
 async function getInitialData() {
     if (!tvId) {
         showPairingScreen();
@@ -265,16 +262,22 @@ async function getInitialData() {
         const { data, error } = await supabase.rpc('get_player_data', { tv_id_input: tvId });
         if (error) throw error;
 
-        if (!data || !data.tv || !data.tv.client_id || !data.playlist) {
-             console.error("Pareamento incompleto. TV não tem cliente ou playlist associada. Voltando à tela de código.");
+        // A verificação foi relaxada. O pareamento é um sucesso se a TV tiver um client_id.
+        if (!data || !data.tv || !data.tv.client_id) {
+             console.error("TV não pareada ou sem cliente. Voltando à tela de código.");
              unpairTv(false);
              return;
         }
         
         pairingScreen.style.display = 'none';
         applySettings(data.tv, data.client_settings);
+        
+        // Se houver uma playlist, define currentPlaylist. Se não, ela fica como um array vazio.
         currentPlaylist = data.playlist_medias || [];
+        
+        // A função playMediaAtIndex já sabe como mostrar a mensagem "Nenhuma playlist selecionada".
         playMediaAtIndex(0);
+        
         startRealtimeListeners(tvId);
         fetchWeather();
         fetchNews();
@@ -293,7 +296,6 @@ function startRealtimeListeners(currentTvId) {
     ).subscribe();
 }
 
-// Substitua a sua função showPairingScreen antiga por esta
 async function showPairingScreen() {
     pairingScreen.style.display = 'flex';
     if (pairingChannel) supabase.removeChannel(pairingChannel);
@@ -302,14 +304,14 @@ async function showPairingScreen() {
     pairingCodeEl.textContent = code;
 
     try {
-        // CORREÇÃO: Em vez de 'insert', chama a nossa nova função RPC segura
-        const { data: newTvId, error } = await supabase.rpc('register_new_tv', {
-            pairing_code_input: code
-        });
-        
+        const { data: newTv, error } = await supabase
+            .from('tvs')
+            .insert({ pairing_code: code })
+            .select('id')
+            .single();
         if (error) throw error;
+        const newTvId = newTv.id;
         
-        // Fica a escutar por atualizações na TV que acabamos de criar
         pairingChannel = supabase
             .channel(`pairing-channel-${newTvId}`)
             .on('postgres_changes', {
@@ -323,7 +325,6 @@ async function showPairingScreen() {
                 }
             })
             .subscribe();
-
     } catch (error) {
         console.error("Erro ao criar TV para pareamento:", error.message);
         pairingCodeEl.textContent = "ERRO";

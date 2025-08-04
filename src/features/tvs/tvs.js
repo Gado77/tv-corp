@@ -5,8 +5,7 @@ const userEmailDisplay = document.getElementById('user-email-display');
 const logoutBtn = document.getElementById('logout-btn');
 const tvListContainer = document.getElementById('tv-list-container');
 const addTvBtn = document.getElementById('add-tv-btn');
-
-// Modal de TV
+// ... (outros seletores permanecem iguais)
 const tvModal = document.getElementById('tv-modal');
 const tvForm = document.getElementById('tv-form');
 const tvModalTitle = document.getElementById('tv-modal-title');
@@ -20,7 +19,7 @@ const tvOrientationSelect = document.getElementById('tv-orientation');
 const tvPairingCodeInput = document.getElementById('tv-pairing-code');
 const pairingCodeGroup = document.getElementById('pairing-code-group');
 
-let clientId = null; // Variável para guardar o ID do cliente
+let clientId = null;
 
 // --- "SENTINELA" E INICIALIZAÇÃO ---
 (async () => {
@@ -29,15 +28,12 @@ let clientId = null; // Variável para guardar o ID do cliente
         window.location.href = '/src/features/auth/auth.html';
         return;
     }
-    
     clientId = session.user.user_metadata.client_id;
     if (!clientId) {
-        alert("Erro crítico: ID do cliente não encontrado. Por favor, faça login novamente.");
-        await supabase.auth.signOut();
+        alert("Erro crítico: ID do cliente não encontrado.");
         window.location.href = '/src/features/auth/auth.html';
         return;
     }
-
     userEmailDisplay.textContent = session.user.email;
     loadTvs();
 })();
@@ -48,11 +44,10 @@ logoutBtn.addEventListener('click', async () => {
     window.location.href = '/src/features/auth/auth.html';
 });
 
-// --- FUNÇÕES DO MODAL ---
+// --- FUNÇÕES DO MODAL (sem alterações) ---
 async function openTvModal(tv = null) {
     tvForm.reset();
-    
-    if (tv) { // Editando uma TV existente
+    if (tv) {
         tvModalTitle.textContent = 'Editar TV';
         tvIdInput.value = tv.id;
         tvNameInput.value = tv.name;
@@ -61,7 +56,7 @@ async function openTvModal(tv = null) {
         pairingCodeGroup.style.display = 'none';
         tvPairingCodeInput.required = false;
         await populatePlaylistSelect(tv.playlist_id);
-    } else { // Registrando (pareando) uma nova TV
+    } else {
         tvModalTitle.textContent = 'Registrar Nova TV';
         tvIdInput.value = '';
         pairingCodeGroup.style.display = 'block';
@@ -70,11 +65,7 @@ async function openTvModal(tv = null) {
     }
     tvModal.style.display = 'flex';
 }
-
-function closeTvModal() {
-    tvModal.style.display = 'none';
-}
-
+function closeTvModal() { tvModal.style.display = 'none'; }
 addTvBtn.addEventListener('click', () => openTvModal());
 closeTvModalBtn.addEventListener('click', closeTvModal);
 cancelTvBtn.addEventListener('click', closeTvModal);
@@ -83,15 +74,12 @@ async function populatePlaylistSelect(selectedPlaylistId = null) {
     try {
         const { data: playlists, error } = await supabase.from('playlists').select('id, name');
         if (error) throw error;
-        
         tvPlaylistSelect.innerHTML = '<option value="">Nenhuma</option>';
         playlists.forEach(p => {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = p.name;
-            if (p.id === selectedPlaylistId) {
-                option.selected = true;
-            }
+            if (p.id === selectedPlaylistId) option.selected = true;
             tvPlaylistSelect.appendChild(option);
         });
     } catch (error) {
@@ -99,27 +87,21 @@ async function populatePlaylistSelect(selectedPlaylistId = null) {
     }
 }
 
-
 // --- LÓGICA DE GERENCIAMENTO DE TVS (CRUD) ---
-
 async function loadTvs() {
     tvListContainer.innerHTML = '<p>Buscando TVs registradas...</p>';
     try {
         const { data: tvs, error } = await supabase.from('tvs').select('*, playlists(name)').order('created_at', { ascending: false });
         if (error) throw error;
-
         if (tvs.length === 0) {
             tvListContainer.innerHTML = '<p>Nenhuma TV registrada. Ligue uma TV e use o código para registrar.</p>';
             return;
         }
-
         tvListContainer.innerHTML = tvs.map(tv => `
             <div class="item">
                 <div class="item-info">
                     <div class="name">${tv.name}</div>
-                    <div class="details">
-                        Local: ${tv.location || 'N/A'} | Playlist: ${tv.playlists?.name || 'Nenhuma'}
-                    </div>
+                    <div class="details">Local: ${tv.location || 'N/A'} | Playlist: ${tv.playlists?.name || 'Nenhuma'}</div>
                 </div>
                 <div class="item-actions">
                     <button class="btn btn-sm btn-secondary edit-tv-btn" data-id="${tv.id}">Editar</button>
@@ -127,71 +109,58 @@ async function loadTvs() {
                 </div>
             </div>
         `).join('');
-
         document.querySelectorAll('.edit-tv-btn').forEach(b => {
             b.addEventListener('click', () => {
-                const id = b.dataset.id;
-                const tv = tvs.find(t => t.id === id);
+                const tv = tvs.find(t => t.id === b.dataset.id);
                 openTvModal(tv);
             });
         });
         document.querySelectorAll('.delete-tv-btn').forEach(b => b.addEventListener('click', (e) => deleteTv(e.target.dataset.id)));
-
     } catch (error) {
         tvListContainer.innerHTML = `<p style="color:red;">Erro ao carregar TVs: ${error.message}</p>`;
     }
 }
-// Substitua a sua função tvForm.addEventListener antiga por esta
+
+// ***** FUNÇÃO DE SUBMISSÃO DO FORMULÁRIO ATUALIZADA *****
 tvForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = tvIdInput.value;
-    
-    // Objeto base com os dados do formulário
-    const baseData = {
-        name: tvNameInput.value,
-        location: tvLocationInput.value,
-        playlist_id: tvPlaylistSelect.value || null,
-        orientation: tvOrientationSelect.value,
-    };
 
     try {
         let error;
         if (id) {
-            // Editando TV existente (esta parte está correta)
-            ({ error } = await supabase.from('tvs').update(baseData).eq('id', id));
+            // Editando TV existente (lógica inalterada)
+            const tvData = {
+                name: tvNameInput.value,
+                location: tvLocationInput.value,
+                playlist_id: tvPlaylistSelect.value || null,
+                orientation: tvOrientationSelect.value,
+            };
+            ({ error } = await supabase.from('tvs').update(tvData).eq('id', id));
         } else {
-            // Registrando (pareando) uma nova TV
+            // Pareando uma nova TV usando a função RPC
             const pairingCode = tvPairingCodeInput.value.trim().toUpperCase();
             if (!pairingCode) {
                 alert("O código de pareamento é obrigatório.");
                 return;
             }
             
-            // CORREÇÃO: Junta os dados do formulário com o client_id para "reivindicar" a TV
-            // e anula o código de pareamento APÓS a operação ser bem-sucedida.
-            const updateData = {
-                ...baseData,
-                client_id: clientId,
-                pairing_code: null // Anula o código de pareamento para segurança
-            };
-            
-            const { data: updatedTvs, error: updateError } = await supabase
-                .from('tvs')
-                .update(updateData)
-                .eq('pairing_code', pairingCode)
-                .select(); // Pede para retornar os dados atualizados para verificação
-
-            if (updateError) throw updateError;
-            
-            // Se nenhum registo for atualizado, significa que o código estava errado
-            if (!updatedTvs || updatedTvs.length === 0) {
-                throw new Error("Código de pareamento inválido ou já utilizado.");
-            }
+            // Chama a nossa nova função 'claim_tv'
+            const { error: rpcError } = await supabase.rpc('claim_tv', {
+                p_pairing_code: pairingCode,
+                p_name: tvNameInput.value,
+                p_location: tvLocationInput.value,
+                p_playlist_id: tvPlaylistSelect.value || null,
+                p_orientation: tvOrientationSelect.value
+            });
+            error = rpcError;
         }
 
+        if (error) throw error;
         closeTvModal();
         loadTvs();
     } catch (error) {
+        // A mensagem de erro agora virá diretamente da nossa função RPC
         alert('Erro ao salvar TV: ' + error.message);
     }
 });
