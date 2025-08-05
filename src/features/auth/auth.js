@@ -1,4 +1,4 @@
-// CORREÇÃO: Caminho relativo para encontrar o ficheiro na pasta 'shared'
+// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
 import { supabase } from '../../shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
@@ -18,8 +18,8 @@ loginForm.addEventListener('submit', async (event) => {
     try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        // CORREÇÃO: Caminho relativo para o dashboard
-        window.location.href = '../dashboard/dashboard.html';
+        // CORREÇÃO 2: Usa a URL amigável para o dashboard
+        window.location.href = '/admin/dashboard';
     } catch (error) {
         showFeedback(`Erro no login: ${error.message}`, 'error');
     }
@@ -36,8 +36,8 @@ forgotPasswordLink.addEventListener('click', async (event) => {
 
     try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            // CORREÇÃO: Caminho relativo para a página de reset de senha
-            redirectTo: window.location.origin + '/src/features/auth/reset-password.html',
+            // CORREÇÃO 3: Usa a URL amigável para a página de reset de senha
+            redirectTo: window.location.origin + '/admin/reset-password',
        });
         if (error) throw error;
         showFeedback('Link de redefinição de senha enviado para o seu e-mail!', 'success');
