@@ -1,4 +1,5 @@
-import { supabase } from '../shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho absoluto para o import a partir da raiz do site
+import { supabase } from '/src/shared/js/supabase-client.js';
 
 // !!!!! IMPORTANTE: COLOQUE O SEU E-MAIL DE SUPER ADMIN AQUI !!!!!
 const SUPER_ADMIN_EMAIL = 'vi.emanoel20152015@gmail.com'; 
@@ -13,7 +14,8 @@ const pendingClientsListDiv = document.getElementById('pending-clients-list');
     // Se não há sessão OU o e-mail logado NÃO É o do Super Admin, expulsa.
     if (!session || session.user.email !== SUPER_ADMIN_EMAIL) {
         alert("Acesso negado. Esta área é restrita.");
-        window.location.href = '../features/auth/auth.html';
+        // CORREÇÃO 2: Usa a URL amigável para a página de login
+        window.location.href = '/admin/login';
         return;
     }
 
@@ -24,12 +26,12 @@ const pendingClientsListDiv = document.getElementById('pending-clients-list');
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    window.location.href = '../features/auth/auth.html';
+    // CORREÇÃO 3: Usa a URL amigável para a página de login
+    window.location.href = '/admin/login';
 });
 
-// --- LÓGICA DE APROVAÇÃO (movida para cá) ---
+// --- LÓGICA DE APROVAÇÃO ---
 async function loadPendingClients() {
-    // ... (O código é o mesmo que estava no dashboard.js)
     pendingClientsListDiv.innerHTML = '<p>Buscando pedidos...</p>';
     try {
         const { data: pending, error } = await supabase.from('pending_signups').select('*').eq('status', 'pending');
@@ -61,13 +63,12 @@ async function loadPendingClients() {
 
 async function handleApproveClick(event) {
     const approveButton = event.target;
-    const pendingId = approveButton.dataset.id; // pendingId aqui é um UUID string
+    const pendingId = approveButton.dataset.id;
     if (!confirm('Aprovar este cliente?')) return;
 
     approveButton.disabled = true;
     approveButton.textContent = 'Aprovando...';
     try {
-        // A CORREÇÃO ESTÁ AQUI: Enviamos pendingId como string, sem parseInt()
         const { error } = await supabase.functions.invoke('aprovar-pedido', { 
             body: { pending_id: pendingId } 
         });

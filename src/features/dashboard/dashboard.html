@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - TV Corporativa</title>
-    <link rel="stylesheet" href="../../shared/css/main.css">
+    <link rel="stylesheet" href="/src/shared/css/main.css">
 </head>
 <body>
     <div class="screen active" id="adminScreen">
         <header class="admin-header">
             <div class="admin-title">TV Corp Admin</div>
             <nav class="admin-nav">
-                <a href="./dashboard.html" class="nav-btn active">Dashboard</a>
-                <a href="../medias/medias.html" class="nav-btn">Mídias</a>
-                <a href="../playlists/playlists.html" class="nav-btn">Playlists</a>
-                <a href="../tvs/tvs.html" class="nav-btn">TVs</a>
-                <a href="../settings/settings.html" class="nav-btn">Configurações</a>
+                <a href="/admin/dashboard" class="nav-btn active">Dashboard</a>
+                <a href="/admin/medias" class="nav-btn">Mídias</a>
+                <a href="/admin/playlists" class="nav-btn">Playlists</a>
+                <a href="/admin/tvs" class="nav-btn">TVs</a>
+                <a href="/admin/settings" class="nav-btn">Configurações</a>
             </nav>
             <div class="nav-user">
                 <span id="user-email-display"></span>
@@ -28,24 +28,21 @@
                 <h1>Bem-vindo ao seu Dashboard</h1>
                 <p>Use o menu acima para navegar e gerenciar seu sistema.</p>
             </section>
-
             <section id="stats-container" style="visibility: hidden;">
                 <div class="stats-grid">
-                    <a href="../medias/medias.html" class="stat-card-link" id="medias-link">
+                    <a href="/admin/medias" class="stat-card-link" id="medias-link">
                         <div class="stat-card">
                             <h2 id="media-count">0</h2>
                             <p>Mídias</p>
                         </div>
                     </a>
-                    
-                    <a href="../playlists/playlists.html" class="stat-card-link" id="playlists-link">
+                    <a href="/admin/playlists" class="stat-card-link" id="playlists-link">
                         <div class="stat-card">
                             <h2 id="playlist-count">0</h2>
                             <p>Playlists</p>
                         </div>
                     </a>
-
-                    <a href="../tvs/tvs.html" class="stat-card-link" id="tvs-link">
+                    <a href="/admin/tvs" class="stat-card-link" id="tvs-link">
                         <div class="stat-card">
                             <h2 id="tv-count">0</h2>
                             <p>TVs</p>
@@ -56,6 +53,6 @@
         </main>
     </div>
 
-    <script type="module" src="./dashboard.js"></script>
+    <script type="module" src="/src/features/dashboard/dashboard.js"></script>
 </body>
 </html>

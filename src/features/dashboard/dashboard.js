@@ -1,5 +1,4 @@
-// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
-import { supabase } from '../../shared/js/supabase-client.js';
+import { supabase } from '/src/shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -13,8 +12,7 @@ const tvCountEl = document.getElementById('tv-count');
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        // CORREÇÃO 2: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        window.location.href = '/admin/login';
         return;
     }
     userEmailDisplay.textContent = session.user.email;
@@ -24,12 +22,10 @@ const tvCountEl = document.getElementById('tv-count');
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    // CORREÇÃO 3: Caminho relativo para a página de login
-    window.location.href = '../auth/auth.html';
+    window.location.href = '/admin/login';
 });
 
 // --- LÓGICA PRINCIPAL DO DASHBOARD ---
-
 async function loadDashboardData() {
     try {
         const [mediaResponse, playlistResponse, tvResponse] = await Promise.all([
@@ -47,23 +43,18 @@ async function loadDashboardData() {
         tvCountEl.textContent = tvResponse.count;
 
         statsContainer.style.visibility = 'visible';
-        
-        // Ativa os links dos cartões de estatísticas
         setupClickableStats();
-
     } catch (error) {
         console.error("Erro ao carregar dados do dashboard:", error);
         statsContainer.innerHTML = `<p style="color:red;">Não foi possível carregar as estatísticas.</p>`;
     }
 }
 
-// Função para tornar os cartões clicáveis
 function setupClickableStats() {
     document.querySelectorAll('.stat-card-link').forEach(link => {
         link.addEventListener('click', function(event) {
-            // Previne o comportamento padrão do link para garantir que a navegação seja suave
             event.preventDefault(); 
-            window.location.href = this.href; // Navega para o URL do link
+            window.location.href = this.href;
         });
     });
 }

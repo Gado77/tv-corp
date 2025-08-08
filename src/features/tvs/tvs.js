@@ -1,5 +1,4 @@
-// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
-import { supabase } from '../../shared/js/supabase-client.js';
+import { supabase } from '/src/shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -19,23 +18,24 @@ const tvOrientationSelect = document.getElementById('tv-orientation');
 const tvPairingCodeInput = document.getElementById('tv-pairing-code');
 const pairingCodeGroup = document.getElementById('pairing-code-group');
 
-let clientId = null;
+let clientId = null; // Variável para guardar o ID do cliente
 
 // --- "SENTINELA" E INICIALIZAÇÃO ---
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        // CORREÇÃO 2: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        window.location.href = '/src/features/auth/auth.html';
         return;
     }
+    
     clientId = session.user.user_metadata.client_id;
     if (!clientId) {
-        alert("Erro crítico: ID do cliente não encontrado.");
-        // CORREÇÃO 3: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        alert("Erro crítico: ID do cliente não encontrado. Por favor, faça login novamente.");
+        await supabase.auth.signOut();
+        window.location.href = '/src/features/auth/auth.html';
         return;
     }
+
     userEmailDisplay.textContent = session.user.email;
     loadTvs();
 })();
@@ -43,14 +43,14 @@ let clientId = null;
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    // CORREÇÃO 4: Caminho relativo para a página de login
-    window.location.href = '../auth/auth.html';
+    window.location.href = '/src/features/auth/auth.html';
 });
 
 // --- FUNÇÕES DO MODAL ---
 async function openTvModal(tv = null) {
     tvForm.reset();
-    if (tv) {
+    
+    if (tv) { // Editando uma TV existente
         tvModalTitle.textContent = 'Editar TV';
         tvIdInput.value = tv.id;
         tvNameInput.value = tv.name;
@@ -59,7 +59,7 @@ async function openTvModal(tv = null) {
         pairingCodeGroup.style.display = 'none';
         tvPairingCodeInput.required = false;
         await populatePlaylistSelect(tv.playlist_id);
-    } else {
+    } else { // Registrando (pareando) uma nova TV
         tvModalTitle.textContent = 'Registrar Nova TV';
         tvIdInput.value = '';
         pairingCodeGroup.style.display = 'block';
@@ -68,7 +68,11 @@ async function openTvModal(tv = null) {
     }
     tvModal.style.display = 'flex';
 }
-function closeTvModal() { tvModal.style.display = 'none'; }
+
+function closeTvModal() {
+    tvModal.style.display = 'none';
+}
+
 addTvBtn.addEventListener('click', () => openTvModal());
 closeTvModalBtn.addEventListener('click', closeTvModal);
 cancelTvBtn.addEventListener('click', closeTvModal);
@@ -77,12 +81,15 @@ async function populatePlaylistSelect(selectedPlaylistId = null) {
     try {
         const { data: playlists, error } = await supabase.from('playlists').select('id, name');
         if (error) throw error;
+        
         tvPlaylistSelect.innerHTML = '<option value="">Nenhuma</option>';
         playlists.forEach(p => {
             const option = document.createElement('option');
             option.value = p.id;
             option.textContent = p.name;
-            if (p.id === selectedPlaylistId) option.selected = true;
+            if (p.id === selectedPlaylistId) {
+                option.selected = true;
+            }
             tvPlaylistSelect.appendChild(option);
         });
     } catch (error) {
@@ -90,16 +97,13 @@ async function populatePlaylistSelect(selectedPlaylistId = null) {
     }
 }
 
+
 // --- LÓGICA DE GERENCIAMENTO DE TVS (CRUD) ---
+
 async function loadTvs() {
     tvListContainer.innerHTML = '<p>Buscando TVs registradas...</p>';
     try {
-        const { data: tvs, error } = await supabase
-            .from('tvs')
-            .select('*, playlists(name)')
-            .not('client_id', 'is', null) 
-            .order('created_at', { ascending: false });
-
+        const { data: tvs, error } = await supabase.from('tvs').select('*, playlists(name)').order('created_at', { ascending: false });
         if (error) throw error;
 
         if (tvs.length === 0) {
@@ -150,17 +154,21 @@ tvForm.addEventListener('submit', async (e) => {
     try {
         let error;
         if (id) {
+            // Editando uma TV existente
             ({ error } = await supabase.from('tvs').update(baseData).eq('id', id));
         } else {
+            // LÓGICA DE PAREAMENTO CORRIGIDA
             const pairingCode = tvPairingCodeInput.value.trim().toUpperCase();
             if (!pairingCode) {
                 alert("O código de pareamento é obrigatório.");
                 return;
             }
             
+            // CORREÇÃO: Prepara os dados para a atualização SEM anular o pairing_code
             const updateData = {
                 ...baseData,
                 client_id: clientId
+                // A linha "pairing_code: null" foi REMOVIDA daqui
             };
             
             const { data: updatedTvs, error: updateError } = await supabase

@@ -1,5 +1,5 @@
-// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
-import { supabase } from '../../shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho absoluto para o import a partir da raiz do site
+import { supabase } from '/src/shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -27,18 +27,17 @@ let clientId = null; // Variável para guardar o ID do cliente
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        // CORREÇÃO 2: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        // CORREÇÃO 2: Usa a URL amigável para a página de login
+        window.location.href = '/admin/login';
         return;
     }
     
-    // Captura e guarda o client_id dos metadados do usuário
     clientId = session.user.user_metadata.client_id;
     if (!clientId) {
-        alert("Erro crítico: ID do cliente não encontrado no perfil do usuário. Por favor, faça login novamente com uma conta válida.");
+        alert("Erro crítico: ID do cliente não encontrado no perfil do usuário.");
         await supabase.auth.signOut();
-        // CORREÇÃO 3: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        // CORREÇÃO 3: Usa a URL amigável para a página de login
+        window.location.href = '/admin/login';
         return;
     }
 
@@ -49,8 +48,8 @@ let clientId = null; // Variável para guardar o ID do cliente
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    // CORREÇÃO 4: Caminho relativo para a página de login
-    window.location.href = '../auth/auth.html';
+    // CORREÇÃO 4: Usa a URL amigável para a página de login
+    window.location.href = '/admin/login';
 });
 
 // --- FUNÇÕES DE MODAL ---
@@ -87,7 +86,6 @@ saveMediaChangesBtn.addEventListener('click', savePlaylistMediaOrder);
 async function loadPlaylists() {
     playlistListContainer.innerHTML = '<p>Buscando playlists...</p>';
     try {
-        // RLS garante que só vemos as playlists do nosso cliente
         const { data: playlists, error } = await supabase.from('playlists').select('*').order('created_at', { ascending: false });
         if (error) throw error;
 
@@ -110,12 +108,13 @@ async function loadPlaylists() {
             </div>
         `).join('');
 
-        // Reatribui os event listeners após renderizar
-        document.querySelectorAll('.edit-playlist-btn').forEach(b => b.addEventListener('click', (e) => {
-            const id = e.target.dataset.id;
-            const playlist = playlists.find(p => p.id === id);
-            openPlaylistModal(playlist);
-        }));
+        document.querySelectorAll('.edit-playlist-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                const id = b.dataset.id;
+                const playlist = playlists.find(p => p.id === id);
+                openPlaylistModal(playlist);
+            });
+        });
         document.querySelectorAll('.edit-media-btn').forEach(b => b.addEventListener('click', (e) => openEditMediaModal(e.target.dataset.id, e.target.dataset.name)));
         document.querySelectorAll('.delete-playlist-btn').forEach(b => b.addEventListener('click', (e) => deletePlaylist(e.target.dataset.id)));
 
@@ -132,7 +131,6 @@ playlistForm.addEventListener('submit', async (e) => {
         description: playlistDescriptionInput.value 
     };
     
-    // Se for uma nova playlist (sem ID), adiciona o client_id que foi capturado no login.
     if (!id) {
         playlistData.client_id = clientId;
     }

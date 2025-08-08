@@ -1,5 +1,5 @@
-// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
-import { supabase } from '../../shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho absoluto para o import a partir da raiz do site
+import { supabase } from '/src/shared/js/supabase-client.js';
 
 // --- Seletores de Elementos e Variáveis Globais ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -12,18 +12,17 @@ let clientId = null; // Variável para guardar o ID do cliente
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        // CORREÇÃO 2: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        // CORREÇÃO 2: Usa a URL amigável para a página de login
+        window.location.href = '/admin/login';
         return;
     }
 
-    // ALTERAÇÃO 1: Captura e guarda o client_id para uso futuro.
     clientId = session.user.user_metadata.client_id;
     if (!clientId) {
         alert("Erro crítico: ID do cliente não encontrado. Por favor, faça login novamente.");
         await supabase.auth.signOut();
-        // CORREÇÃO 3: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        // CORREÇÃO 3: Usa a URL amigável para a página de login
+        window.location.href = '/admin/login';
         return;
     }
 
@@ -34,13 +33,12 @@ let clientId = null; // Variável para guardar o ID do cliente
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    // CORREÇÃO 4: Caminho relativo para a página de login
-    window.location.href = '../auth/auth.html';
+    // CORREÇÃO 4: Usa a URL amigável para a página de login
+    window.location.href = '/admin/login';
 });
 
 // --- LÓGICA DE GERENCIAMENTO DE MÍDIAS ---
 
-// Função para carregar e exibir todas as mídias do banco de dados
 async function loadMedias() {
     mediaListContainer.innerHTML = '<p>Buscando mídias...</p>';
     try {
@@ -73,7 +71,6 @@ async function loadMedias() {
     }
 }
 
-// Função para obter a duração de um arquivo de vídeo
 function getVideoDuration(file) {
     return new Promise((resolve, reject) => {
         const video = document.createElement('video');
@@ -89,7 +86,6 @@ function getVideoDuration(file) {
     });
 }
 
-// Função para lidar com o envio do formulário de nova mídia
 addMediaForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const submitButton = addMediaForm.querySelector('button[type="submit"]');
@@ -108,35 +104,30 @@ addMediaForm.addEventListener('submit', async (event) => {
     }
 
     try {
-        // Lógica aprimorada para upload e inserção
         const isVideo = mediaFile.type.startsWith('video');
         const duration = isVideo ? await getVideoDuration(mediaFile) : parseInt(mediaDurationInput) || 10;
         
-        // 1. Faz o upload do arquivo para o Supabase Storage, agora dentro de uma pasta do cliente
         const filePath = `${clientId}/${Date.now()}_${mediaFile.name}`;
         const { error: uploadError } = await supabase.storage.from('midias').upload(filePath, mediaFile);
         if (uploadError) throw uploadError;
 
-        // 2. Pega a URL pública do arquivo
         const { data: urlData } = supabase.storage.from('midias').getPublicUrl(filePath);
 
-        // 3. Prepara os dados para salvar no banco, incluindo o client_id
         const mediaData = {
             name: mediaName,
             type: isVideo ? 'video' : 'image',
             duration: duration,
             url: urlData.publicUrl,
             file_path: filePath,
-            client_id: clientId // CORREÇÃO DE SEGURANÇA
+            client_id: clientId
         };
 
-        // 4. Insere o registro na tabela 'medias'
         const { error: insertError } = await supabase.from('medias').insert([mediaData]);
         if (insertError) throw insertError;
 
         alert('Mídia adicionada com sucesso!');
         addMediaForm.reset();
-        loadMedias(); // Recarrega a lista de mídias
+        loadMedias();
 
     } catch (error) {
         alert(`Erro ao adicionar mídia: ${error.message}`);
@@ -147,7 +138,6 @@ addMediaForm.addEventListener('submit', async (event) => {
     }
 });
 
-// Função para lidar com a exclusão de uma mídia
 async function handleDeleteMedia(event) {
     const mediaId = event.target.dataset.id;
     const mediaPath = event.target.dataset.path;
@@ -155,18 +145,16 @@ async function handleDeleteMedia(event) {
     if (!confirm('Tem certeza que deseja excluir esta mídia? Esta ação não pode ser desfeita.')) return;
 
     try {
-        // 1. Exclui o arquivo do Supabase Storage
         if (mediaPath) {
              const { error: storageError } = await supabase.storage.from('midias').remove([mediaPath]);
              if (storageError) console.error("Aviso: o arquivo no storage não foi removido.", storageError);
         }
 
-        // 2. Exclui o registro da tabela 'medias' no banco de dados
         const { error: dbError } = await supabase.from('medias').delete().eq('id', mediaId);
         if (dbError) throw dbError;
 
         alert('Mídia excluída com sucesso.');
-        loadMedias(); // Recarrega a lista de mídias
+        loadMedias();
 
     } catch (error) {
         alert(`Erro ao excluir mídia: ${error.message}`);

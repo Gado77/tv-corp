@@ -1,5 +1,5 @@
-// CORREÇÃO 1: Caminho relativo para encontrar o ficheiro na pasta 'shared'
-import { supabase } from '../../shared/js/supabase-client.js';
+// CORREÇÃO 1: Caminho absoluto para o import a partir da raiz do site
+import { supabase } from '/src/shared/js/supabase-client.js';
 
 // --- Seletores de Elementos ---
 const userEmailDisplay = document.getElementById('user-email-display');
@@ -21,8 +21,8 @@ let currentSettings = {};
 (async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        // CORREÇÃO 2: Caminho relativo para a página de login
-        window.location.href = '../auth/auth.html';
+        // CORREÇÃO 2: Usa a URL amigável para a página de login
+        window.location.href = '/admin/login';
         return;
     }
     
@@ -30,8 +30,8 @@ let currentSettings = {};
     if (!clientId) {
         alert("Erro crítico: ID do cliente não encontrado.");
         await supabase.auth.signOut();
-        // CORREÇÃO 3: Caminho relativo para a página de login (também aqui)
-        window.location.href = '../auth/auth.html';
+        // CORREÇÃO 3: Usa a URL amigável para a página de login
+        window.location.href = '/admin/login';
         return;
     }
 
@@ -48,8 +48,8 @@ let currentSettings = {};
 // --- LÓGICA DE LOGOUT ---
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    // CORREÇÃO 4: Caminho relativo para a página de login
-    window.location.href = '../auth/auth.html';
+    // CORREÇÃO 4: Usa a URL amigável para a página de login
+    window.location.href = '/admin/login';
 });
 
 // --- LÓGICA DE CONFIGURAÇÕES ---

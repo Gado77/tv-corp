@@ -1,4 +1,5 @@
-import { supabase } from '../shared/js/supabase-client.js';
+// CORREÇÃO: Caminho absoluto para o import a partir da raiz do site
+import { supabase } from '/src/shared/js/supabase-client.js';
 
 // --- Seletores de Elementos do DOM ---
 const body = document.body;
@@ -25,9 +26,8 @@ let realtimeChannel = null;
 let pairingChannel = null;
 let settings = {};
 let isSettingsPanelOpen = false;
-
 let newsItems = [];
-let currentNewsIndex = 0
+let currentNewsIndex = 0;
 
 // --- Funções de Controle da Interface ---
 function showInfoMode() {
@@ -73,7 +73,6 @@ async function populatePlaylists() {
     const select = document.getElementById('playlist-select');
     if (!select || !tvId) return;
     try {
-        // Usa a função RPC segura para buscar as playlists
         const { data, error } = await supabase.rpc('get_playlists_for_tv', { tv_id_input: tvId });
         if (error) throw error;
         
@@ -158,18 +157,17 @@ function toggleFullscreen() {
     }
 }
 
-// Substitua a sua função playMediaAtIndex antiga por esta
 function playMediaAtIndex(index) {
     clearTimeout(mediaTimer);
     const spinner = mediaContainer.querySelector('.loading-spinner');
 
     if (!currentPlaylist || currentPlaylist.length === 0) {
-        if(spinner) spinner.style.display = 'none'; // Esconde o spinner se a playlist estiver vazia
+        if(spinner) spinner.style.display = 'none';
         mediaContainer.innerHTML = `<div class="overlay"><h1>Nenhuma playlist selecionada.</h1><p>Por favor, associe uma playlist a esta TV no painel de administração.</p></div>`;
         return;
     }
     
-    if(spinner) spinner.style.display = 'block'; // Mostra o spinner no início de cada mídia
+    if(spinner) spinner.style.display = 'block';
 
     currentMediaIndex = (index + currentPlaylist.length) % currentPlaylist.length;
     const media = currentPlaylist[currentMediaIndex];
@@ -191,7 +189,7 @@ function playMediaAtIndex(index) {
     const newElement = document.createElement(elementType);
 
     const onMediaReady = () => {
-        if(spinner) spinner.style.display = 'none'; // Esconde o spinner
+        if(spinner) spinner.style.display = 'none';
         newElement.classList.add('active');
         if (elementType === 'video') {
             newElement.play().catch(e => console.error("Erro ao dar play no vídeo:", e));
@@ -204,8 +202,8 @@ function playMediaAtIndex(index) {
     
     const onMediaError = () => {
         console.error(`Falha ao carregar mídia: ${media.url}`);
-        if(spinner) spinner.style.display = 'none'; // Esconde o spinner em caso de erro
-        setTimeout(() => playMediaAtIndex(currentMediaIndex + 1), 500); // Tenta a próxima mídia
+        if(spinner) spinner.style.display = 'none';
+        setTimeout(() => playMediaAtIndex(currentMediaIndex + 1), 500);
     };
 
     newElement.addEventListener('load', onMediaReady);
@@ -251,11 +249,10 @@ async function fetchNews() {
         const { data, error } = await supabase.rpc('get_recent_news');
         if (error) throw error;
         
-        // Preenche a variável global newsItems
         newsItems = data && data.length ? data.map(item => ({ title: item.summary_title, description: item.summary_text })) : [];
         
         if (newsItems.length > 0) {
-            displayNews(0); // Exibe a primeira notícia assim que são carregadas
+            displayNews(0);
         } else {
             newsTitle.textContent = "Sem notícias recentes.";
         }
@@ -268,7 +265,6 @@ async function fetchNews() {
 function displayNews(index) {
     if (!newsItems || newsItems.length === 0) return;
 
-    // Garante que o índice seja sempre válido e que a navegação seja circular
     currentNewsIndex = (index + newsItems.length) % newsItems.length;
     
     const item = newsItems[currentNewsIndex];
@@ -300,17 +296,21 @@ async function getInitialData() {
         const { data, error } = await supabase.rpc('get_player_data', { tv_id_input: tvId });
         if (error) throw error;
 
-        // Verificação final e robusta
+        // CORREÇÃO: A verificação agora é apenas se a TV foi reivindicada por um cliente.
+        // A falta de uma playlist é um estado válido.
         if (!data || !data.tv || !data.tv.client_id) {
-             console.error("TV não pareada ou sem cliente. Voltando à tela de código.");
-             setTimeout(() => unpairTv(false), 3000);
+             console.error("TV não pareada ou sem cliente. A voltar à tela de código.");
+             setTimeout(() => unpairTv(false), 3000); // Adicionado um atraso para evitar loops rápidos
              return;
         }
         
         pairingScreen.style.display = 'none';
         applySettings(data.tv, data.client_settings);
         currentPlaylist = data.playlist_medias || [];
+        
+        // A função playMediaAtIndex já sabe como exibir uma mensagem se a playlist estiver vazia.
         playMediaAtIndex(0);
+        
         startRealtimeListeners(tvId);
         fetchWeather();
         fetchNews();
@@ -364,7 +364,6 @@ async function showPairingScreen() {
                         
                         if (pairingChannel) supabase.removeChannel(pairingChannel);
                         
-                        // Em vez de recarregar, chama a função de carregar dados diretamente
                         getInitialData(); 
                     }
                 }
@@ -381,74 +380,62 @@ function initPlayer() {
     updateClock();
     setInterval(updateClock, 30000);
     
-    // Adiciona "escutadores" de eventos para os botões no painel de configurações
     document.getElementById('save-playlist-btn')?.addEventListener('click', saveNewPlaylist);
     document.getElementById('restart-player-btn')?.addEventListener('click', restartPlayer);
     document.getElementById('unpair-tv-btn')?.addEventListener('click', () => unpairTv(true));
     
-    // Adiciona o "escutador" principal para os eventos de teclado
-   // Substitua o seu bloco addEventListener('keydown') por este
-
-document.addEventListener('keydown', (event) => {
-    // Se o painel de configurações estiver aberto, a navegação é SÓ dentro dele
-    if (isSettingsPanelOpen) {
-        event.preventDefault();
-        switch (event.key) {
-            case 'ArrowUp': handleSettingsNavigation('up'); break;
-            case 'ArrowDown': handleSettingsNavigation('down'); break;
-            case 'Enter': document.activeElement?.click(); break;
-            case 'Escape': hideSettingsPanel(); break;
+    document.addEventListener('keydown', (event) => {
+        if (isSettingsPanelOpen) {
+            event.preventDefault();
+            switch (event.key) {
+                case 'ArrowUp': handleSettingsNavigation('up'); break;
+                case 'ArrowDown': handleSettingsNavigation('down'); break;
+                case 'Enter': document.activeElement?.click(); break;
+                case 'Escape': hideSettingsPanel(); break;
+            }
+            return;
         }
-        return;
-    }
+        switch (event.key) {
+            case 'ArrowUp':
+                body.classList.contains('info-mode-active') ? hideInfoMode() : showInfoMode();
+                break;
 
-    // Se o painel de configurações NÃO estiver aberto, usa a lógica de controlo principal
-    switch (event.key) {
-        case 'ArrowUp':
-            body.classList.contains('info-mode-active') ? hideInfoMode() : showInfoMode();
-            break;
+            case 'ArrowDown':
+                if (!body.classList.contains('info-mode-active')) {
+                    toggleSettingsPanel();
+                }
+                break;
 
-        case 'ArrowDown':
-            if (!body.classList.contains('info-mode-active')) {
-                toggleSettingsPanel();
-            }
-            break;
+            case 'Escape':
+                hideInfoMode();
+                hideSettingsPanel();
+                break;
 
-        case 'Escape':
-            hideInfoMode();
-            hideSettingsPanel();
-            break;
+            case 'Enter':
+                if (!isSettingsPanelOpen && !body.classList.contains('info-mode-active')) {
+                    toggleFullscreen();
+                }
+                break;
+            
+            case 'ArrowRight':
+                if (body.classList.contains('info-mode-active')) {
+                    displayNews(currentNewsIndex + 1);
+                } else {
+                    playMediaAtIndex(currentMediaIndex + 1);
+                }
+                break;
 
-        case 'Enter':
-            if (!isSettingsPanelOpen && !body.classList.contains('info-mode-active')) {
-                toggleFullscreen();
-            }
-            break;
-        
-        // ***** LÓGICA DE NAVEGAÇÃO ADICIONADA AQUI *****
-        case 'ArrowRight':
-            // Se o modo de info estiver ativo, avança a notícia. Se não, avança a mídia.
-            if (body.classList.contains('info-mode-active')) {
-                displayNews(currentNewsIndex + 1);
-            } else {
-                playMediaAtIndex(currentMediaIndex + 1);
-            }
-            break;
-
-        case 'ArrowLeft':
-            // Se o modo de info estiver ativo, retrocede a notícia. Se não, retrocede a mídia.
-            if (body.classList.contains('info-mode-active')) {
-                displayNews(currentNewsIndex - 1);
-            } else {
-                playMediaAtIndex(currentMediaIndex - 1);
-            }
-            break;
-    }
-});
-
-    // Inicia o processo de carregar os dados do Player
+            case 'ArrowLeft':
+                if (body.classList.contains('info-mode-active')) {
+                    displayNews(currentNewsIndex - 1);
+                } else {
+                    playMediaAtIndex(currentMediaIndex - 1);
+                }
+                break;
+        }
+    });
+    
     getInitialData();
 }
 
-// Garante que a função initPlayer() seja chamada quando a página terminar de carregar
 window.addEventListener('DOMContentLoaded', initPlayer);

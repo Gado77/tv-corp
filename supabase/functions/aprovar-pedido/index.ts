@@ -18,10 +18,10 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      Deno.env.get('MY_SERVICE_KEY')!
     )
 
-    // --- LÓGICA CORRIGIDA E REORDENADA ---
+    // --- LÓGICA DE APROVAÇÃO E CONVITE ---
 
     // 1. Busca os dados do pedido pendente
     const { data: pendingData, error: pendingError } = await supabaseAdmin
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         throw new Error(`Pedido pendente com ID ${pending_id} não encontrado ou já aprovado.`);
     }
 
-    // 2. Cria o registro do cliente PRIMEIRO para obter o seu ID
+    // 2. Cria o registro do cliente primeiro para obter o seu ID
     const { data: clientData, error: clientError } = await supabaseAdmin
       .from('clients')
       .insert({ name: pendingData.client_name })
@@ -50,24 +50,22 @@ Deno.serve(async (req) => {
     // 3. Cria uma linha de configurações padrão para o novo cliente
     await supabaseAdmin.from('settings').insert({ client_id: newClientId });
     
-    // 4. Cria o novo usuário no sistema de autenticação
-    const { error: userError } = await supabaseAdmin.auth.admin.createUser({
-        email: pendingData.user_email,
-        // CORREÇÃO 1: Adiciona uma senha temporária, longa e aleatória.
-        // O cliente nunca usará esta senha, ele irá redefini-la.
-        password: crypto.randomUUID(), 
-        email_confirm: true,
-        // CORREÇÃO 2: Adiciona o 'client_id' nos metadados do usuário.
-        // Isto é CRUCIAL para que o resto da aplicação funcione.
-        user_metadata: {
-            client_id: newClientId
+    // 4. Usa 'inviteUserByEmail' para criar o usuário E enviar o e-mail de convite
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        pendingData.user_email,
+        {
+            // Informa ao Supabase para onde redirecionar o usuário após a verificação do e-mail
+            redirectTo: 'https://hsimportssj.com/src/features/auth/reset-password.html',
+            data: {
+                client_id: newClientId
+            }
         }
-    });
+    );
 
     if (userError) {
         // Se a criação do usuário falhar, remove o cliente que foi criado para não deixar lixo.
         await supabaseAdmin.from('clients').delete().eq('id', newClientId);
-        throw new Error(`Erro ao criar usuário: ${userError.message}`);
+        throw new Error(`Erro ao convidar usuário: ${userError.message}`);
     }
 
     // 5. Marca o pedido como 'approved'
@@ -76,9 +74,13 @@ Deno.serve(async (req) => {
       .update({ status: 'approved' })
       .eq('id', pending_id);
 
-    // --- FIM DA LÓGICA CORRIGIDA ---
+    // --- FIM DA LÓGICA ---
 
-    return new Response(JSON.stringify({ success: true, message: "Cliente aprovado e usuário criado. O cliente agora pode usar 'Esqueci minha senha' para logar." }), {
+    return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Cliente aprovado! Um e-mail de convite foi enviado para o usuário.",
+        user: userData.user 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
