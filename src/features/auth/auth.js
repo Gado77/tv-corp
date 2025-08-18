@@ -25,10 +25,9 @@ loginForm.addEventListener('submit', async (event) => {
     }
 });
 
-// --- LÓGICA DE "ESQUECI MINHA SENHA" (ATUALIZADA) ---
+// --- Lógica de "Esqueci Minha Senha" ---
 forgotPasswordLink.addEventListener('click', async (event) => {
     event.preventDefault();
-    // CORREÇÃO 3: Lê o e-mail do campo de login da página, em vez de usar um prompt.
     const email = document.getElementById('login-email').value;
     
     if (!email) {
@@ -62,21 +61,29 @@ signupModal.addEventListener('click', (e) => {
     }
 });
 
-// --- Lógica de Solicitação de Cadastro ---
+// --- LÓGICA DE SOLICITAÇÃO DE CADASTRO (REFORMULADA) ---
 signupForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const clientName = document.getElementById('signup-client-name').value;
     const userEmail = document.getElementById('signup-email').value;
+    // Captura a nova senha do formulário
+    const password = document.getElementById('signup-password').value;
+    
     const submitButton = signupForm.querySelector('button');
     submitButton.disabled = true;
     submitButton.textContent = 'A enviar...';
 
     try {
-        const { error } = await supabase.functions.invoke('receber-pedido', {
-            body: { client_name: clientName, user_email: userEmail },
+        // Invoca a nova Edge Function 'solicitar-cadastro'
+        const { error } = await supabase.functions.invoke('solicitar-cadastro', {
+            body: { 
+                client_name: clientName, 
+                user_email: userEmail,
+                password: password // Envia a senha para a função
+            },
         });
         if (error) throw error;
-        showFeedback('Solicitação enviada com sucesso! Receberá um e-mail quando a sua conta for aprovada.', 'success');
+        showFeedback('Solicitação enviada com sucesso! Você será notificado quando a sua conta for aprovada.', 'success');
         signupForm.reset();
         signupModal.style.display = 'none';
     } catch (error) {

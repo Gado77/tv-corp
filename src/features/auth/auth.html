@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal de Acesso - TV Corporativa</title>
-    <link rel="stylesheet" href="/src/shared/css/main.css">
+    <link rel="stylesheet" href="/src/shared/css/main.css"> 
 </head>
 <body>
     <div class="screen active" id="loginScreen">
@@ -46,8 +46,12 @@
                     <input type="text" id="signup-client-name" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label for="signup-email">Seu Email de Contato:</label>
+                    <label for="signup-email">Seu Email de Acesso:</label>
                     <input type="email" id="signup-email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Crie sua Senha:</label>
+                    <input type="password" id="signup-password" class="form-input" required minlength="6" placeholder="Mínimo de 6 caracteres">
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Enviar Solicitação</button>
