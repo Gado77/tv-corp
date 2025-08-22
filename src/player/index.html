@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
 
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
+        default-src 'self' https:;
         script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com;
-        img-src 'self' https://*.supabase.co data:;
+        img-src 'self' https://*.supabase.co https://hsimportssj.com data:;
         media-src 'self' https://*.supabase.co;
         connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openweathermap.org https://api.rss2json.com;
     ">
@@ -43,14 +43,23 @@
         </div>
 
         <div id="info-panel">
+           <!-- <div class="news-icon-container">
+                <img src="https://hsimportssj.com/wp-content/uploads/2025/08/favicon-2.png" alt="Ícone de Notícias" class="news-icon">
+            </div> -->
+            
             <div class="news-content">
                 <div class="news-title" id="news-title">Carregando notícias...</div>
                 <div class="news-summary" id="news-summary">Aguarde...</div>
             </div>
+
             <div class="news-timestamp"></div>
         </div>
 
         <div id="settings-panel">
+            <button id="close-settings-btn" class="settings-close-btn settings-interactive" aria-label="Fechar">
+                 &times;
+            </button>
+
             <div class="settings-content">
                 <h2>Configurações da TV</h2>
                 <div class="settings-group">
@@ -72,13 +81,22 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <div id="pairing-screen" class="overlay">
         <h1>Configure esta TV</h1>
         <p>No seu painel de admin, crie uma nova TV e use o código abaixo:</p>
         <div id="pairing-code">Gerando código...</div>
+    </div>
+
+    <div id="confirmation-modal" class="overlay" style="display: none;">
+        <div class="confirmation-dialog">
+            <p id="confirmation-message">Tem certeza que deseja continuar?</p>
+            <div class="confirmation-actions">
+                <button id="confirm-btn" class="btn btn-primary dialog-interactive">Confirmar</button>
+                <button id="cancel-btn" class="btn btn-secondary dialog-interactive">Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="/src/player/player.js"></script>
